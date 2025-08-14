@@ -50,37 +50,24 @@
   });
 
   function php_email_form_submit(thisForm, action, formData) {
-    const jsonData = Object.fromEntries(formData.entries());
     fetch(action, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      body: JSON.stringify(jsonData)      
+      body: formData
     })
     .then(response => {
+      thisForm.querySelector('.loading').classList.remove('d-block');
       if (response.ok) {
-        return response.json();
+        thisForm.querySelector('.sent-message').classList.add('d-block');
+        thisForm.reset();
       } else {
         throw new Error(`${response.status} ${response.statusText}`);
       }
     })
-    .then(data => {
-      thisForm.querySelector('.loading').classList.remove('d-block');     
-      if (data.message && data.message === "Form submitted successfully") {
-        thisForm.querySelector('.sent-message').classList.add('d-block');
-        thisForm.reset(); // Reseta o formulário após submissão bem-sucedida
-      } else {
-        throw new Error(data.error || 'Unexpected response format.');
-      }
-    })
     .catch(error => {
-      // Passa a mensagem de erro detalhada para o displayError
       displayError(thisForm, error.message || error);
     });
   }
-
+  
   function displayError(thisForm, error) {
     thisForm.querySelector('.loading').classList.remove('d-block');
     thisForm.querySelector('.error-message').innerHTML = error;
