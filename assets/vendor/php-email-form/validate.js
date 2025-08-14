@@ -50,29 +50,34 @@
   });
 
   function php_email_form_submit(thisForm, action, formData) {
+    const jsonData = Object.fromEntries(formData.entries());
     fetch(action, {
       method: 'POST',
-      body: formData,
-      headers: {'X-Requested-With': 'XMLHttpRequest'}
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(jsonData)      
     })
     .then(response => {
-      if( response.ok ) {
-        return response.text();
+      if (response.ok) {
+        return response.json();
       } else {
-        throw new Error(`${response.status} ${response.statusText} ${response.url}`); 
+        throw new Error(`${response.status} ${response.statusText}`);
       }
     })
     .then(data => {
-      thisForm.querySelector('.loading').classList.remove('d-block');
-      if (data.trim() == 'OK') {
+      thisForm.querySelector('.loading').classList.remove('d-block');     
+      if (data.message && data.message === "Form submitted successfully") {
         thisForm.querySelector('.sent-message').classList.add('d-block');
-        thisForm.reset(); 
+        thisForm.reset(); // Reseta o formulário após submissão bem-sucedida
       } else {
-        throw new Error(data ? data : 'Form submission failed and no error message returned from: ' + action); 
+        throw new Error(data.error || 'Unexpected response format.');
       }
     })
-    .catch((error) => {
-      displayError(thisForm, error);
+    .catch(error => {
+      // Passa a mensagem de erro detalhada para o displayError
+      displayError(thisForm, error.message || error);
     });
   }
 
