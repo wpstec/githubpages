@@ -50,24 +50,31 @@
   });
 
   function php_email_form_submit(thisForm, action, formData) {
+    // Envie como FormData e apenas peça JSON na resposta.
+    // NÃO defina 'Content-Type' manualmente para evitar preflight/CORS.
     fetch(action, {
       method: 'POST',
+      headers: { 'Accept': 'application/json' },
       body: formData
     })
-    .then(response => {
+    .then(res => {
       thisForm.querySelector('.loading').classList.remove('d-block');
-      if (response.ok) {
+      if (res.ok) {
+        // Sucesso: mostra mensagem e reseta form
         thisForm.querySelector('.sent-message').classList.add('d-block');
         thisForm.reset();
-      } else {
-        throw new Error(`${response.status} ${response.statusText}`);
+        return;
       }
+      // Tenta extrair erro amigável do FormSubmit
+      return res.json()
+        .then(data => { throw new Error(data.error || `Failed: ${res.status} ${res.statusText}`); })
+        .catch(() => { throw new Error(`Failed: ${res.status} ${res.statusText}`); });
     })
     .catch(error => {
       displayError(thisForm, error.message || error);
     });
   }
-  
+
   function displayError(thisForm, error) {
     thisForm.querySelector('.loading').classList.remove('d-block');
     thisForm.querySelector('.error-message').innerHTML = error;
